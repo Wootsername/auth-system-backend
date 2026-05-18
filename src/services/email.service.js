@@ -1,25 +1,37 @@
 /**
- * email.service.js — Email Sending via Nodemailer + Ethereal
+ * email.service.js — Dynamic Email Sending via Custom SMTP or Ethereal
  *
- * Uses Ethereal (fake SMTP) for demo purposes.
- * Automatically creates a test account on first use.
- * Logs the preview URL to the console so you can view "sent" emails.
- *
- * FALLBACK: If SMTP connection fails (e.g. Render blocks port 587),
- * the email content is logged directly to the console instead.
+ * Configurable via environment variables (e.g. Mailtrap, Gmail).
+ * Automatically falls back to Ethereal and console logging if no credentials are provided
+ * or if SMTP connections fail.
  */
 const nodemailer = require('nodemailer');
 
 let transporter;
-let etherealFailed = false;
+let fallbackMode = false;
 
 /**
- * Create an Ethereal test account and configure the transporter.
- * Called automatically on first email send.
+ * Initialize SMTP Transporter dynamically.
  */
 async function initializeTransporter() {
+    // Option 1: Custom SMTP (e.g. Mailtrap, Gmail) via environment variables
+    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+        console.log('📧 Using custom SMTP configuration:', process.env.SMTP_HOST);
+        transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST,
+            port: parseInt(process.env.SMTP_PORT || '587'),
+            secure: process.env.SMTP_SECURE === 'true',
+            connectionTimeout: 10000,
+            auth: {
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_PASS
+            }
+        });
+        return;
+    }
+
+    // Option 2: Fallback to Ethereal (demo account)
     try {
-        // nodemailer.createTestAccount() generates a free Ethereal mailbox
         const testAccount = await nodemailer.createTestAccount();
 
         console.log('');
@@ -35,7 +47,7 @@ async function initializeTransporter() {
             host: 'smtp.ethereal.email',
             port: 587,
             secure: false,
-            connectionTimeout: 10000,   // 10 second timeout (fail fast)
+            connectionTimeout: 10000,
             auth: {
                 user: testAccount.user,
                 pass: testAccount.pass
@@ -43,52 +55,50 @@ async function initializeTransporter() {
         });
     } catch (err) {
         console.warn('⚠️  Could not create Ethereal account:', err.message);
-        etherealFailed = true;
+        fallbackMode = true;
     }
 }
 
 /**
- * Send an email using Ethereal.
- * Falls back to console logging if SMTP is blocked (e.g. on Render free tier).
- *
- * @param {Object} options - { to, subject, html }
- * @returns {string|null} Preview URL (or null if fallback was used)
+ * Send an email.
+ * Falls back to console logging if SMTP fails.
  */
 async function sendEmail({ to, subject, html }) {
-    // Initialize transporter on first use
-    if (!transporter && !etherealFailed) {
+    if (!transporter && !fallbackMode) {
         await initializeTransporter();
     }
 
-    // Try sending via Ethereal SMTP
-    if (transporter && !etherealFailed) {
+    if (transporter && !fallbackMode) {
         try {
             const info = await transporter.sendMail({
-                from: '"Auth System" <noreply@authsystem.com>',
+                from: process.env.SMTP_FROM || '"Auth System" <noreply@authsystem.com>',
                 to,
                 subject,
                 html
             });
 
-            const previewUrl = nodemailer.getTestMessageUrl(info);
+            // If using Ethereal, log the preview URL
+            if (transporter.options.host.includes('ethereal')) {
+                const previewUrl = nodemailer.getTestMessageUrl(info);
+                console.log('────────────────────────────────────────');
+                console.log(`📧 Email sent to: ${to}`);
+                console.log(`   Subject:     ${subject}`);
+                console.log(`   Preview URL: ${previewUrl}`);
+                console.log('────────────────────────────────────────');
+                return previewUrl;
+            }
 
-            console.log('────────────────────────────────────────');
-            console.log(`📧 Email sent to: ${to}`);
-            console.log(`   Subject:     ${subject}`);
-            console.log(`   Preview URL: ${previewUrl}`);
-            console.log('────────────────────────────────────────');
-
-            return previewUrl;
+            console.log(`📧 Email successfully sent via SMTP to: ${to}`);
+            return true;
 
         } catch (err) {
             console.warn(`⚠️  SMTP send failed: ${err.message}`);
             console.warn('   Falling back to console logging...');
-            etherealFailed = true;
+            fallbackMode = true;
         }
     }
 
     // ─── FALLBACK: Log email content directly to console ────────
-    // This happens when Render blocks outbound SMTP (port 587)
     console.log('');
     console.log('══════════════════════════════════════════════════════════');
     console.log('📧 EMAIL (console fallback — SMTP blocked by host)');
@@ -97,7 +107,6 @@ async function sendEmail({ to, subject, html }) {
     console.log(`   Subject: ${subject}`);
     console.log('──────────────────────────────────────────────────────────');
 
-    // Extract any URLs from the HTML for easy copy-paste
     const urlMatches = html.match(/https?:\/\/[^\s<"]+/g);
     if (urlMatches) {
         console.log('   🔗 Links found in email:');
