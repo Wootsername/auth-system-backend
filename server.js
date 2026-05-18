@@ -19,8 +19,26 @@ app.use(cookieParser());       // parse cookies (needed for refresh tokens)
 
 // ─── CORS ───────────────────────────────────────────────
 // Allow the Angular frontend to make requests with cookies
+const allowedOrigins = [
+    'https://jolly-valkyrie-e7a535.netlify.app',
+    'http://localhost:4200'
+];
+
 app.use(cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:4200',
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps, curl, or swagger)
+        if (!origin) return callback(null, true);
+        
+        const cleanOrigin = origin.trim().replace(/\/$/, "");
+        const envOrigin = (process.env.CORS_ORIGIN || '').trim().replace(/\/$/, "");
+        
+        if (allowedOrigins.includes(cleanOrigin) || cleanOrigin === envOrigin) {
+            callback(null, true);
+        } else {
+            console.warn(`⚠️ Blocked by CORS: ${origin}`);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true   // allow cookies to be sent cross-origin
 }));
 
