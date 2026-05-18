@@ -6,10 +6,10 @@ Node.js + Express + MySQL authentication API with JWT, refresh tokens, email ver
 
 | Service | URL |
 |---------|-----|
-| **Backend API** | `https://YOUR-BACKEND.onrender.com` |
-| **API Docs** | `https://YOUR-BACKEND.onrender.com/api-docs` |
-| **Health Check** | `https://YOUR-BACKEND.onrender.com/health` |
-| **Frontend** | `https://YOUR-FRONTEND.netlify.app` |
+| **Backend API** | `https://auth-system-backend-j7xw.onrender.com` |
+| **API Docs** | `https://auth-system-backend-j7xw.onrender.com/api-docs` |
+| **Health Check** | `https://auth-system-backend-j7xw.onrender.com/health` |
+| **Frontend** | `https://jolly-valkyrie-e7a535.netlify.app` |
 
 ## Local Setup
 

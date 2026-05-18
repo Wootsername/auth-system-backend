@@ -448,11 +448,10 @@ function generateRefreshToken() {
  * - maxAge: 7 days   → matches the refresh token expiry
  */
 function setRefreshTokenCookie(res, token) {
-    const isProduction = process.env.NODE_ENV === 'production';
     res.cookie('refreshToken', token, {
         httpOnly: true,
-        sameSite: isProduction ? 'None' : 'Lax',
-        secure: isProduction,
+        sameSite: 'None',    // required for cross-domain cookies (Netlify → Render)
+        secure: true,        // required when sameSite is 'None' (HTTPS only)
         maxAge: 7 * 24 * 60 * 60 * 1000,   // 7 days in milliseconds
         path: '/'
     });
