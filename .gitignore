@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Environment variables (NEVER commit secrets)
+.env
+
+# Aiven SSL certificate (contains sensitive connection info)
+ca.pem
+
+# Render temp SSL file
+tmp_ca.pem
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
