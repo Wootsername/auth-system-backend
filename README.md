@@ -26,7 +26,7 @@ cp .env.example .env
 
 ### 3. Set up MySQL database
 - **Local**: Create a database named `auth_system_db`
-- **Aiven**: Use the provided connection details and download `ca.pem`
+- **Railway**: Use the provided connection details and set `DB_SSL=true`
 
 ### 4. Start the server
 ```bash
@@ -67,12 +67,11 @@ The server will:
 ```
 PORT=4000
 NODE_ENV=production
-DB_HOST=<aiven-host>
-DB_PORT=<aiven-port>
-DB_USER=<aiven-user>
-DB_PASSWORD=<aiven-password>
-DB_NAME=defaultdb
-DB_SSL_CA_CONTENT=<contents of ca.pem>
+MYSQLHOST=<mysql-host>
+MYSQLPORT=<mysql-port>
+MYSQLUSER=<mysql-user>
+MYSQLPASSWORD=<mysql-password>
+MYSQLDATABASE=<mysql-database>
 JWT_SECRET=<strong-random-secret>
 CORS_ORIGIN=https://YOUR-FRONTEND.netlify.app
 ```

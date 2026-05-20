@@ -6,8 +6,6 @@
  * Auto-creates the users table on first run.
  */
 const mysql = require('mysql2/promise');
-const fs = require('fs');
-const path = require('path');
 
 let pool;
 
@@ -18,34 +16,17 @@ let pool;
 function getPool() {
     if (pool) return pool;
 
-    // ─── SSL Configuration (required for Aiven) ─────────
-    let ssl = undefined;
-
-    if (process.env.DB_SSL_CA_CONTENT) {
-        // OPTION 1: CA cert content stored as environment variable (for Render)
-        // Write it to a temp file so mysql2 can read it
-        const tmpCaPath = path.join(__dirname, '../../tmp_ca.pem');
-        fs.writeFileSync(tmpCaPath, process.env.DB_SSL_CA_CONTENT.replace(/\\n/g, '\n'));
-        ssl = { ca: fs.readFileSync(tmpCaPath) };
-        console.log('🔒 SSL enabled (from DB_SSL_CA_CONTENT env var)');
-    } else if (process.env.DB_SSL_CA) {
-        // OPTION 2: CA cert file path (for local dev with Aiven)
-        const caPath = path.resolve(process.env.DB_SSL_CA);
-        if (fs.existsSync(caPath)) {
-            ssl = { ca: fs.readFileSync(caPath) };
-            console.log('🔒 SSL enabled (from ca.pem file)');
-        } else {
-            console.warn('⚠️  DB_SSL_CA is set but file not found:', caPath);
-        }
-    }
+    // ─── SSL Configuration ─────────────────────────
+    const ssl = { rejectUnauthorized: false };
+    console.log('🔒 SSL enabled (rejectUnauthorized: false)');
 
     // ─── Create Connection Pool ─────────────────────────
     pool = mysql.createPool({
-        host: process.env.DB_HOST,
-        port: parseInt(process.env.DB_PORT) || 3306,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME,
+        host: process.env.MYSQLHOST || process.env.DB_HOST,
+        port: parseInt(process.env.MYSQLPORT || process.env.DB_PORT) || 3306,
+        user: process.env.MYSQLUSER || process.env.DB_USER,
+        password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD,
+        database: process.env.MYSQLDATABASE || process.env.DB_NAME,
         ssl,
         waitForConnections: true,
         connectionLimit: 10,
@@ -64,7 +45,10 @@ async function initialize() {
 
     // Test the connection
     const connection = await pool.getConnection();
-    console.log(`✅ Connected to MySQL: ${process.env.DB_HOST}:${process.env.DB_PORT || 3306}/${process.env.DB_NAME}`);
+    const host = process.env.MYSQLHOST || process.env.DB_HOST;
+    const port = process.env.MYSQLPORT || process.env.DB_PORT || 3306;
+    const database = process.env.MYSQLDATABASE || process.env.DB_NAME;
+    console.log(`✅ Connected to MySQL: ${host}:${port}/${database}`);
     connection.release();
 
     // Create the users table
