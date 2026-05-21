@@ -15,9 +15,9 @@ async function listUsers() {
         ssl: ssl
     });
 
-    console.log('✅ Connected! Fetching all users in your live database:\n');
+    console.log('✅ Connected! Fetching all accounts in your live database:\n');
 
-    const [rows] = await connection.query('SELECT id, firstName, lastName, email, role, isVerified FROM users');
+    const [rows] = await connection.query('SELECT id, firstName, lastName, email, role, isVerified FROM accounts');
     
     if (rows.length === 0) {
         console.log('⚠️ Your database is currently empty!');
