@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import errorHandler from './src/middleware/error-handler';
 import accountsController from './src/accounts/accounts.controller';
+import setupSwagger from './src/_helpers/swagger';
 
 const app = express();
 
@@ -39,6 +40,9 @@ app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use('/accounts', accountsController);
 
+// ─── Swagger Docs ─────────────────────────────────────────────────────────────
+setupSwagger(app);
+
 // ─── Error Handler ────────────────────────────────────────────────────────────
 app.use(errorHandler);
 
@@ -48,6 +52,7 @@ const app_start = app.listen(PORT, () => {
     console.log('');
     console.log('═══════════════════════════════════════════');
     console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📚 Swagger docs: http://localhost:${PORT}/api-docs`);
     console.log(`❤️  Health check: http://localhost:${PORT}/health`);
     console.log(`🌐 CORS origin:  ${process.env.CORS_ORIGIN || 'http://localhost:4200'}`);
     console.log('═══════════════════════════════════════════');
